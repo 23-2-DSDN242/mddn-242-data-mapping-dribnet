@@ -43,10 +43,10 @@ function draw () {
   renderCounter = renderCounter + 1;
   print(renderCounter);
   if(renderCounter > 1080) {
-    // console.log("Done!")
+    console.log("Done!")
     noLoop();
     // uncomment this to save the result
-    saveArtworkImage(outputFile);
+    // saveArtworkImage(outputFile);
   }
 }
 
