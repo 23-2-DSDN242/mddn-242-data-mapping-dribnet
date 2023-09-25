@@ -51,6 +51,21 @@ function draw () {
     renderCounter = renderCounter + num_lines_to_draw;
     updatePixels();
   }
+  else if (curLayer == 1) {
+    for(let i=0; i<500; i++) {
+      let x1 = random(0, width);
+      let y1 = random(0, height);
+      let mask = maskImg.get(x1, y1);
+      if(mask[1] > 128) {
+        let x2 = x1 + random(-20, 20);
+        let y2 = y1 + random(-20, 20);
+        colorMode(RGB);
+        stroke(255, 255, 0);
+        line(x1, y1, x2, y2);
+      }
+    }
+    renderCounter = renderCounter + 1;
+  }
   else {
     rectMode(CORNERS);
     for(let i=0; i<100; i++) {
@@ -78,8 +93,14 @@ function draw () {
   if(curLayer == 0 && renderCounter > 1080) {
     curLayer = 1;
     renderCounter = 0;
+    print("Switching to curLayer 1");
   }
-  else if(curLayer == 1 && renderCounter > 500) {
+  if(curLayer == 1 && renderCounter > 500) {
+    curLayer = 2;
+    renderCounter = 0;
+    print("Switching to curLayer 2");
+  }
+  else if(curLayer == 2 && renderCounter > 1500) {
     console.log("Done!")
     noLoop();
     // uncomment this to save the result
