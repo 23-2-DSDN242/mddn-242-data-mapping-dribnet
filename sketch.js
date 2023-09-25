@@ -21,27 +21,46 @@ function setup () {
   background(0, 0, 128);
   sourceImg.loadPixels();
   maskImg.loadPixels();
+  colorMode(HSB);
 }
 
 function draw () {
-  let j = renderCounter;
+  let num_lines_to_draw = 40;
   // get one scanline
-  for(let i=0; i<1920; i++) {
-    let pix = sourceImg.get(i, j);
-    let mask = maskImg.get(i, j);
-    if(mask[0] > 128) {
-      // draw the full pixels
-      set(i, j, pix);
-    }
-    else {
+  for(let j=renderCounter; j<renderCounter+num_lines_to_draw && j<1080; j++) {
+    for(let i=0; i<1920; i++) {
+      colorMode(RGB);
+      let pix = sourceImg.get(i, j);
+      // create a color from the values (always RGB)
+      let col = color(pix);
+      let mask = maskImg.get(i, j);
+
+      colorMode(HSB, 360, 100, 100);
       // draw a "dimmed" version in gray
-      let gray_color = 64 + pix[1] / 8;
-      set(i, j, gray_color);
+      let h = hue(col);
+      let s = saturation(col);
+      let b = brightness(col);
+
+      if(mask[0] > 128) {
+        // draw the full pixels
+        // let new_sat = map(s, 0, 100, 50, 100);
+        let new_brt = map(b, 0, 100, 50, 100);
+        // let new_hue = map(h, 0, 360, 180, 540);
+        let new_col = color(0, s, new_brt);
+        set(i, j, new_col);
+      }
+      else {
+        // let new_brt = map(b, 0, 100, 20, 40);
+        let new_brt = map(b, 0, 100, 100, 0);
+        let new_col = color(h, 0, new_brt);
+        // let new_col = color(h, s, b);
+        set(i, j, new_col);
+      }
     }
   }
+  renderCounter = renderCounter + num_lines_to_draw;
   updatePixels();
-  renderCounter = renderCounter + 1;
-  print(renderCounter);
+  // print(renderCounter);
   if(renderCounter > 1080) {
     console.log("Done!")
     noLoop();
