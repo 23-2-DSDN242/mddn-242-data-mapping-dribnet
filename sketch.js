@@ -25,35 +25,31 @@ function setup () {
 
 let X_STOP = 640;
 let Y_STOP = 480;
-let OFFSET = 6;
+// let X_STOP = 1920;
+// let Y_STOP = 1080;
+let OFFSET = 20;
 
-let renderCounter=5;
+let renderCounter=0;
 function draw () {
+  angleMode(DEGREES);
   let num_lines_to_draw = 40;
   // get one scanline
-  for(let j=renderCounter; j<renderCounter+num_lines_to_draw && j<1080; j++) {
-    for(let i=5; i<X_STOP; i++) {
+  for(let j=renderCounter; j<renderCounter+num_lines_to_draw && j<Y_STOP; j++) {
+    for(let i=0; i<X_STOP; i++) {
       colorMode(RGB);
-      let pix = [0, 0, 0, 255];
       let mask = maskImg.get(i, j);
-      if (mask[1] > 128) {
+      if (mask[1] < 128) {
         pix = sourceImg.get(i, j);
       }
       else {
-        let sum_rgb = [0, 0, 0]
-        let num_cells = 0;
-        for(let wx=-OFFSET;wx<OFFSET;wx++){
-          for (let wy=-OFFSET;wy<OFFSET;wy++) {
-            let pix = sourceImg.get(i+wx, j+wy);
-            for(let c=0; c<3; c++) {
-              sum_rgb[c] += pix[c];
-            }
-            num_cells += 1;
-          }
-        }
-        for(let c=0; c<3; c++) {
-          pix[c] = int(sum_rgb[c] / num_cells);
-        }        
+        let wave = sin(j*8);
+        let slip = map(wave, -1, 1, -OFFSET, OFFSET);
+        pix = sourceImg.get(i+slip, j);
+
+        // let brt = map(wave, -1, 1, 0, 255);
+        // for(let c=0; c<3; c++) {
+        //   pix[c] = brt;
+        // }
       }
 
       set(i, j, pix);
