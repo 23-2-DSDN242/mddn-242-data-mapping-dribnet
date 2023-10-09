@@ -1,15 +1,16 @@
 let sourceImg=null;
 let maskImg=null;
+let textImg = null;
 
 // change these three lines as appropiate
-let sourceFile = "input_1.jpg";
-let maskFile   = "mask_1.png";
-let outputFile = "output_1.png";
+let sourceFile = "input_new3.jpg";
+let maskFile   = "mask_new3.png";
+let outputFile = "output_new3.png";
 
 function preload() {
   sourceImg = loadImage(sourceFile);
   maskImg = loadImage(maskFile);
-  textImg = loadImage("texture.png");
+  textImg = loadImage("texture2.png");
 }
 
 function setup () {
@@ -24,8 +25,8 @@ function setup () {
   textImg.loadPixels();
 }
 
-let X_STOP = 640;
-let Y_STOP = 480;
+let X_STOP = 1920;
+let Y_STOP = 1080;
 
 let renderCounter=0;
 function draw () {
@@ -41,13 +42,17 @@ function draw () {
       let tex = textImg.get(i, j);
 
       if(mask[0] > 128) {
-        set(i, j, pix);
+        let new_col = [0, 0, 0, 255];
+        new_col[0] = map(50, 0, 100, pix[0], 255);
+        new_col[1] = map(70, 0, 100, pix[1], 255);
+        new_col[2] = map(0, 0, 100, pix[2], 255);
+        set(i, j, new_col);
       }
       else {
         let new_col = [0, 0, 0, 255];
-        for(let k=0; k<3; k++) {
-          new_col[k] = map(40, 0, 100, pix[k], tex[k]);
-        }
+        new_col[0] = map(40, 0, 100, pix[0], tex[0]);
+        new_col[1] = map(40, 0, 100, pix[1], tex[1]);
+        new_col[2] = map(70, 0, 100, pix[2], tex[2]);
         // let new_col = color(h, s,  newBrt);
         set(i, j, new_col);
       }
