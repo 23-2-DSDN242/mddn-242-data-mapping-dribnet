@@ -2,11 +2,9 @@ let sourceImg=null;
 let maskImg=null;
 
 // change these three lines as appropiate
-let sourceFile = "input_new.jpg";
-let maskFile   = "mask_new.png";
-let outputFile = "output_4.png";
-let maskCenter = null;
-let maskCenterSize = null;
+let sourceFile = "input_1.jpg";
+let maskFile   = "mask_1.png";
+let outputFile = "output_1.png";
 
 function preload() {
   sourceImg = loadImage(sourceFile);
@@ -23,84 +21,87 @@ function setup () {
   sourceImg.loadPixels();
   maskImg.loadPixels();
   colorMode(HSB);
-
-  maskCenterSearch(20);
 }
 
-// let X_STOP = 640;
-// let Y_STOP = 480;
-let X_STOP = 1920;
-let Y_STOP = 1080;
-let OFFSET = 20;
+let X_STOP = 640;
+let Y_STOP = 480;
+let DIAMETER = 11;
 
-function maskCenterSearch(min_width) {
-    let max_up_down = 0;
-    let max_left_right = 0;
-    let max_x_index = 0;
-    let max_y_index = 0;
-
-    // first scan all rows top to bottom
-    print("Scanning mask top to bottom...")
-    for(let j=0; j<Y_STOP; j++) {
-      // look across this row left to right and count
-      let mask_count = 0;
-      for(let i=0; i<X_STOP; i++) {
-        let mask = maskImg.get(i, j);
-        if (mask[1] > 128) {
-          mask_count = mask_count + 1;
+// return a custom pixel kernel with given diameter (should be odd). will return array[diameter][diameter]
+function makePixelKernel(diameter, is_reverse=false, is_diamond=false) {
+  let kernel = [];
+  let on_value = 1;
+  let off_value = 0;
+  if (is_reverse) {
+    on_value = 0;
+    off_value = 1;
+  }
+  for (let j=0; j<diameter; j++) {
+    let j_center = (diameter-1) / 2;
+    let j_offset = abs(j_center-j);
+    let j_frac = j_offset / j_center;
+    let row = [];
+    kernel.push(row);
+    for (let i=0; i<diameter; i++) {
+      let i_center = (diameter-1) / 2;
+      let i_offset = abs(i_center-i);
+      let i_frac = i_offset / i_center;
+      if (is_diamond) {
+        if (i_frac + j_frac > 1) {
+          row.push(off_value);
+        }
+        else {
+          row.push(on_value);
         }
       }
-      // check if that row sets a new record
-      if (mask_count > max_left_right) {
-        max_left_right = mask_count;
-        max_y_index = j;
-      }
-    }
-
-    // now scan once left to right as well
-    print("Scanning mask left to right...")
-    for(let i=0; i<X_STOP; i++) {
-      // look across this column up to down and count
-      let mask_count = 0;
-      for(let j=0; j<Y_STOP; j++) {
-        let mask = maskImg.get(i, j);
-        if (mask[1] > 128) {
-          mask_count = mask_count + 1;
+      else {
+        if ((i_frac*i_frac + j_frac*j_frac) > 1) {
+          row.push(off_value);
+        }
+        else {
+          row.push(on_value);
         }
       }
-      // check if that row sets a new record
-      if (mask_count > max_up_down) {
-        max_up_down = mask_count;
-        max_x_index = i;
-      }
     }
-
-    print("Scanning mask done!")
-    if (max_left_right > min_width && max_up_down > min_width) {
-      maskCenter = [max_x_index, max_y_index];
-      maskCenterSize = [max_left_right, max_up_down];
-    }
+  }
+  return kernel;
 }
 
-let renderCounter=0;
+let renderCounter=5;
 function draw () {
-  angleMode(DEGREES);
+  // make kernel
+  is_reverse = true;
+  is_diamond = false;
+  let kernel = makePixelKernel(DIAMETER, is_reverse, is_diamond)
+
   let num_lines_to_draw = 40;
   // get one scanline
-  for(let j=renderCounter; j<renderCounter+num_lines_to_draw && j<Y_STOP; j++) {
-    for(let i=0; i<X_STOP; i++) {
+  for(let j=renderCounter; j<renderCounter+num_lines_to_draw && j<1080; j++) {
+    for(let i=5; i<X_STOP; i++) {
       colorMode(RGB);
+      let pix = [0, 0, 0, 255];
       let mask = maskImg.get(i, j);
-      if (mask[1] < 128) {
+      if (mask[1] > 128) {
         pix = sourceImg.get(i, j);
       }
       else {
-        if(j%2 == 0) {
-          pix = [255, 255, 0, 255]
+        let sum_rgb = [0, 0, 0]
+        let num_cells = 0;
+        for(let wx=0;wx<DIAMETER;wx++){
+          for (let wy=0;wy<DIAMETER;wy++) {
+            let kernel_value = kernel[wx][wy];
+            if (kernel_value > 0) {
+              let pix = sourceImg.get(i+wx, j+wy);
+              for(let c=0; c<3; c++) {
+                sum_rgb[c] += pix[c];
+              }
+              num_cells += 1;              
+            }
+          }
         }
-        else {
-          pix = sourceImg.get(i, j);          
-        }
+        for(let c=0; c<3; c++) {
+          pix[c] = int(sum_rgb[c] / num_cells);
+        }        
       }
 
       set(i, j, pix);
@@ -108,19 +109,6 @@ function draw () {
   }
   renderCounter = renderCounter + num_lines_to_draw;
   updatePixels();
-
-  if (maskCenter !== null) {
-    strokeWeight(5);
-    fill(0, 255, 0);
-    stroke(255, 0, 0);
-    ellipse(maskCenter[0], maskCenter[1], 100);
-    line(maskCenter[0]-200, maskCenter[1], maskCenter[0]+200, maskCenter[1]);
-    line(maskCenter[0], maskCenter[1]-200, maskCenter[0], maskCenter[1]+200);
-    noFill();
-    let mcw = maskCenterSize[0];
-    let mch = maskCenterSize[1];
-    rect(maskCenter[0]-mcw/2, maskCenter[1]-mch/2, mcw, mch);
-  }
 
   // print(renderCounter);
   if(renderCounter > Y_STOP) {
